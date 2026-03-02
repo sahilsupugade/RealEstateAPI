@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+pydantic>=2.0
+pandas
+numpy
+requests
+plotly
+python-dotenv
+scikit-learn
