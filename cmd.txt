@@ -1,23 +1,2 @@
 cd "C:\Users\91892\Documents\#Programming\#Project\python\API\backend"
 uvicorn app:app --reload
-
-{
-  "bedrooms": 2,
-  "bathrooms": 2,
-  "carpet_area": 500,
-  "balcony": 1,
-  "store_room": true,
-  "facing": "East",
-  "furnish_type": "Semifurnished",
-  "prop_type": "Flat",
-  "city": "Mumbai",
-  "ageing": "New",
-  "location_area": "Kandivali",
-  "floor_category": "Low Floor",
-  "amenities": [
-    "Water softening plant",
-        "Spacious Interiors",
-        "Natural Light",
-        "Airy Rooms",
-        "High Ceiling Height"  ]
-}

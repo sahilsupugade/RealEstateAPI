@@ -14,9 +14,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# --------------------------------------------------
-# APP INIT
-# --------------------------------------------------
 
 app = FastAPI()
 
@@ -31,8 +28,7 @@ app.add_middleware(
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # --------------------------------------------------
-# LOAD STATIC FILES
-# --------------------------------------------------
+# LOAD FILES
 
 coords_df = pd.read_csv(os.path.join(BASE_DIR, "OpenStreet.csv"))
 direction_df = pd.read_csv(os.path.join(BASE_DIR, "nearby_area_direction_level.csv"))
@@ -40,10 +36,6 @@ direction_df = pd.read_csv(os.path.join(BASE_DIR, "nearby_area_direction_level.c
 coords_df["geo_place"] = coords_df["geo_place"].str.strip().str.lower()
 
 OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
-
-# --------------------------------------------------
-# HELPERS
-# --------------------------------------------------
 
 def get_coordinates(location_area: str):
     row = coords_df[coords_df["geo_place"] == location_area.strip().lower()]
@@ -98,9 +90,7 @@ def get_weather(lat: float, lon: float):
         "wind_speed": data["wind"]["speed"],
     }
 
-# --------------------------------------------------
-# INPUT SCHEMA
-# --------------------------------------------------
+# INPUT 
 
 class Input(BaseModel):
     bedrooms: int = Field(..., gt=0)
@@ -176,9 +166,7 @@ class Input(BaseModel):
             return "Medium"
         return "High"
 
-# --------------------------------------------------
 # PREDICTION
-# --------------------------------------------------
 
 @app.post("/predict")
 def predict(data: Input):
@@ -203,6 +191,8 @@ def predict(data: Input):
 
     prediction = model.predict(input_df)
     final_price = float(np.expm1(prediction[0]))
+    lower = final_price * 0.9
+    upper = final_price * 1.1
 
     lat, lon = get_coordinates(data.location_area)
     weather = None
@@ -221,34 +211,11 @@ def predict(data: Input):
 
     return {
     "prediction": final_price,
+    "lower": lower,
+    "upper": upper,
     "weather": weather,
     "aqi": aqi
     }
-
-# --------------------------------------------------
-# NEARBY PLACES
-# --------------------------------------------------
-
-# @app.get("/nearby/{area}")
-# def get_nearby(area: str):
-
-#     filtered = direction_df[
-#         direction_df["location_area"].str.strip().str.lower()
-#         == area.strip().lower()
-#     ].copy()
-
-#     if filtered.empty:
-#         return {}
-
-#     filtered["places"] = filtered["places"].apply(ast.literal_eval)
-
-#     result = {}
-#     for _, row in filtered.iterrows():
-#         result.setdefault(row["direction"], {}) \
-#               .setdefault(row["category"], []) \
-#               .extend(row["places"])
-
-#     return result
 
 @app.get("/nearby/{area}")
 def get_nearby(area: str):
@@ -269,7 +236,9 @@ def get_nearby(area: str):
         "Metro",
         "Railway",
         "Mall",
-        "Bank"
+        "Bank",
+        "Clinic",
+        "Market"
     ]
 
     result = {}
@@ -307,9 +276,8 @@ def get_nearby(area: str):
 
     return final_output
 
-# --------------------------------------------------
-# MAP (UNCHANGED DESIGN & SETTINGS)
-# --------------------------------------------------
+
+# MAP
 
 @app.get("/map", response_class=HTMLResponse)
 def show_map():
