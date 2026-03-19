@@ -168,10 +168,11 @@ class Input(BaseModel):
 
 # PREDICTION
 
+with open(os.path.join(BASE_DIR, "rfpipeline.pkl"), "rb") as f:
+        model = pickle.load(f)
+
 @app.post("/predict")
 def predict(data: Input):
-    with open(os.path.join(BASE_DIR, "rfpipeline.pkl"), "rb") as f:
-        model = pickle.load(f)
 
     input_df = pd.DataFrame([{
         "carpet_area": data.carpet_area,
