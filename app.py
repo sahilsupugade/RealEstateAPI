@@ -27,6 +27,37 @@ app.add_middleware(
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+
+def download_from_drive(file_id, destination):
+    URL = "https://drive.google.com/uc?export=download"
+    
+    session = requests.Session()
+    response = session.get(URL, params={"id": file_id}, stream=True)
+
+    # Handle confirmation token (for large files)
+    for key, value in response.cookies.items():
+        if key.startswith("download_warning"):
+            response = session.get(URL, params={"id": file_id, "confirm": value}, stream=True)
+            break
+
+    with open(destination, "wb") as f:
+        for chunk in response.iter_content(1024 * 1024):
+            if chunk:
+                f.write(chunk)
+
+# ---- Usage ----
+
+FILE_ID = "1ucn9d77v6Xtzk5uM1SvlvQGu-XFqg-KU"
+MODEL_PATH = os.path.join(BASE_DIR, "rfpipeline.pkl")
+
+if not os.path.exists(MODEL_PATH):
+    print("Downloading model...")
+    download_from_drive(FILE_ID, MODEL_PATH)
+    print("Download complete")
+
+with open(MODEL_PATH, "rb") as f:
+    model = pickle.load(f)
+
 # --------------------------------------------------
 # LOAD FILES
 
@@ -167,9 +198,6 @@ class Input(BaseModel):
         return "High"
 
 # PREDICTION
-
-with open(os.path.join(BASE_DIR, "rfpipeline.pkl"), "rb") as f:
-        model = pickle.load(f)
 
 @app.post("/predict")
 def predict(data: Input):
